@@ -1,0 +1,8 @@
+.idea
+.eslintcache
+.DS_Store
+node_modules
+/bin
+coverage
+coverage.json
+build
