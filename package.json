@@ -1,7 +1,7 @@
 {
-  "name": "ethCarInsurance",
+  "name": "health-insurance-smartcontract-demo",
   "version": "1.0.0",
-  "repository": "git@github.com:validitylabs/ethCarInsurance.git",
+  "repository": "git@github.com:lukesimurina/health-insurance-smartcontract-demo.git",
   "author": "Dr. Sebastian Buergel <sb@validitylabs.org>",
   "license": "MIT",
   "private": false,

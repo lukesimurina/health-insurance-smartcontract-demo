@@ -1,5 +1,5 @@
-var CarInsurance = artifacts.require("./CarInsurance.sol");
+var HealthInsurance = artifacts.require("./HealthInsurance.sol");
 
-module.exports = function(deployer) {
-  deployer.deploy(CarInsurance);
+module.exports = function (deployer) {
+    deployer.deploy(HealthInsurance);
 };

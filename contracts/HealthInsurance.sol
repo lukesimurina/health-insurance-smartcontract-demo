@@ -2,7 +2,7 @@ pragma solidity ^0.4.15;
 
 import './Insurance.sol';
 
-contract CarInsurance is Insurance {
+contract HealthInsurance is Insurance {
 
     struct InsuranceTaker {
         bool banned;
