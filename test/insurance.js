@@ -60,7 +60,7 @@ contract("HealthInsurance", function (accounts) {
         insuranceInstance = await HealthInsurance.deployed();
     });
 
-    it("insures user", async () => {
+    it("insures user with health insurance", async () => {
         let insured = await insuranceInstance.isInsured(accounts[0]);
         assert.isFalse(insured, "User should not be insured");
 
@@ -69,7 +69,7 @@ contract("HealthInsurance", function (accounts) {
         assert.isTrue(insured, "User should now be insured");
     });
 
-    it("pays premium", async () => {
+    it("pays premium for health insurance", async () => {
         let contractBalanceBefore = await web3.eth.getBalance(
             insuranceInstance.address
         );
@@ -92,7 +92,7 @@ contract("HealthInsurance", function (accounts) {
             .should.be.bignumber.equal(contractBalanceAfter);
     });
 
-    it("pays premium for", async () => {
+    it("pays premium for health insurance for multiple months", async () => {
         for (var payments = 0; payments < 10; payments++) {
             await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 });
         }
@@ -100,22 +100,26 @@ contract("HealthInsurance", function (accounts) {
         let insured = await insuranceInstance.isInsured(accounts[0]);
         assert.isTrue(insured, "User should still be insured");
     });
-    /*
-  it('initiates claim process', async () => {
-    let customer = await insuranceInstance.insuranceTakers(accounts[0]);
-    let numAccidents = customer[3].toNumber();
 
-    assert.equal(numAccidents, 0, 'User should have 0 accidents before first claim');
+    it("initiates claim process for health insurance", async () => {
+        let customer = await insuranceInstance.insuranceTakers(accounts[0]);
+        let numClaims = customer[3].toNumber();
 
-    await insuranceInstance.claim();
+        assert.equal(
+            numClaims,
+            0,
+            "User should have 0 claims before first claim"
+        );
 
-    customer = await insuranceInstance.insuranceTakers(accounts[0]);
-    numAccidents = customer[3].toNumber();
+        await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
 
-    assert.equal(numAccidents, 1, 'User should have 1 accident after claim');
-  });
-*/
-    it("does not pay premium in time", async () => {
+        customer = await insuranceInstance.insuranceTakers(accounts[0]);
+        numClaims = customer[3].toNumber();
+
+        assert.equal(numClaims, 1, "User should have 1 claim after claim");
+    });
+
+    it("loses insurance if premium is not paid in time", async () => {
         let insured = await insuranceInstance.isInsured(accounts[0]);
         assert.isTrue(insured, "User should still be insured");
 
@@ -129,7 +133,7 @@ contract("HealthInsurance", function (accounts) {
         );
     });
 
-    it("pays premium too late", async () => {
+    it("throws error if premium is paid too late for health insurance", async () => {
         try {
             await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 });
             assert.fail("should have thrown before");
