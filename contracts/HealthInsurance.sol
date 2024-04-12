@@ -1,25 +1,24 @@
 pragma solidity ^0.4.15;
 
-import './Insurance.sol';
+import "./Insurance.sol";
 
 contract HealthInsurance is Insurance {
-
     struct InsuranceTaker {
         bool banned;
         bool policyValid;
         uint256 lastPayment;
-        uint256 numAccidents;
+        uint256 numClaims;
     }
 
     mapping(address => InsuranceTaker) public insuranceTakers;
 
     uint256 public paymentPeriod = 30 days;
 
-    uint256 public premiumPerAccident = 0.1 ether;
+    uint256 public premiumPerMonth = 0.1 ether;
 
-    uint256 public damagePayment = 1 ether;
+    uint256 public maxCoverage = 5 ether;
 
-    function underwrite() payable public {
+    function underwrite() public payable {
         InsuranceTaker storage customer = insuranceTakers[msg.sender];
 
         // do not accept new customers that have been banned previously
@@ -38,24 +37,31 @@ contract HealthInsurance is Insurance {
 
         InsuranceTaker storage customer = insuranceTakers[insuranceTaker];
 
-        if (customer.policyValid && customer.lastPayment + paymentPeriod < now) {
+        if (
+            customer.policyValid && customer.lastPayment + paymentPeriod < now
+        ) {
             customer.policyValid = false;
             customer.banned = true;
         }
     }
 
     // checks if an insurance taker is currently insured
-    function isInsured(address insuranceTaker) public constant returns (bool insured) {
+    function isInsured(
+        address insuranceTaker
+    ) public constant returns (bool insured) {
         InsuranceTaker storage customer = insuranceTakers[insuranceTaker];
-        return customer.policyValid && 
+        return
+            customer.policyValid &&
             !customer.banned &&
             customer.lastPayment + paymentPeriod >= now;
     }
 
     // calculates the premium for an insurance taker
-    function getPremium(address insuranceTaker) constant public returns (uint256 premium) {
+    function getPremium(
+        address insuranceTaker
+    ) public constant returns (uint256 premium) {
         InsuranceTaker storage customer = insuranceTakers[insuranceTaker];
-        return (customer.numAccidents + 1) * premiumPerAccident;
+        return (customer.numClaims + 1) * premiumPerMonth; // Monthly premium increases every claim
     }
 
     // allows premium to be paid by separate account
@@ -74,11 +80,14 @@ contract HealthInsurance is Insurance {
         customer.lastPayment = now;
     }
 
-    function claim() public {
+    function claim(uint256 amount) public {
         require(isInsured(msg.sender));
         InsuranceTaker storage customer = insuranceTakers[msg.sender];
-        msg.sender.transfer(damagePayment);
-        customer.numAccidents++;
-    }
 
+        require(amount <= maxCoverage); // Check if claimed amount is within coverage
+        require(amount <= address(this).balance); // Ensure contract has sufficient funds for claim
+
+        msg.sender.transfer(amount);
+        customer.numClaims++;
+    }
 }
