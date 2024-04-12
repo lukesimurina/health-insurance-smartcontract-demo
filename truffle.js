@@ -6,13 +6,13 @@
  */
 module.exports = {
     mocha: {
-        useColors: true,
+        useColors: true
     },
     networks: {
         development: {
             host: "localhost",
             port: 8545,
-            network_id: "*",
-        },
-    },
+            network_id: "*"
+        }
+    }
 };
