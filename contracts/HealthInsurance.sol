@@ -8,6 +8,7 @@ contract HealthInsurance is Insurance {
         bool policyValid;
         uint256 lastPayment;
         uint256 numClaims;
+        uint256 lastClaimTime; // Add last claim time field
     }
 
     mapping(address => InsuranceTaker) public insuranceTakers;
@@ -18,15 +19,20 @@ contract HealthInsurance is Insurance {
 
     uint256 public maxCoverage = 5 ether;
 
+
     function underwrite() public payable {
         InsuranceTaker storage customer = insuranceTakers[msg.sender];
 
         // do not accept new customers that have been banned previously
         require(!customer.banned);
 
-        // in order to underwrite the customer needs to pay the first premium upfront
-        require(msg.value == getPremium(msg.sender));
+        // Calculate the required premium for the customer
+        uint256 requiredPremium = getPremium(msg.sender);
 
+        // Ensure the amount sent is equal to or greater than the required premium
+        require(msg.value >= requiredPremium);
+
+        // Set the last payment time and mark the policy as valid
         customer.lastPayment = now;
         customer.policyValid = true;
     }
@@ -80,14 +86,17 @@ contract HealthInsurance is Insurance {
         customer.lastPayment = now;
     }
 
+    uint256 public claimCooldown = 1 days; // Add a cooldown period of 1 day between claims
+
     function claim(uint256 amount) public {
         require(isInsured(msg.sender));
         InsuranceTaker storage customer = insuranceTakers[msg.sender];
 
         require(amount <= maxCoverage); // Check if claimed amount is within coverage
         require(amount <= address(this).balance); // Ensure contract has sufficient funds for claim
-
+        require(now >= customer.lastClaimTime + claimCooldown); // Ensure cooldown period has passed
         msg.sender.transfer(amount);
         customer.numClaims++;
+        customer.lastClaimTime = now; // Update last claim time
     }
 }
