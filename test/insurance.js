@@ -1,18 +1,29 @@
 /**
+ * Important notes for code:
+ * 1 Ethereum is made up of 1e18 wei (Therefore when 1e18 is seen in the code, it is referring to 1 ethereum.)
+ * Therefore, 0.1 Etherum is 1e17 wei (assumed monthly premium)
+ */
+
+/**
  * Contract artifacts
  */
+
+// Importing the health insurance contract
 const HealthInsurance = artifacts.require("./HealthInsurance");
 
+// Importing BigNumber from web3 to handle large numbers
 const BigNumber = web3.BigNumber;
 
+// Setting up chai for assertions, and configuring it to work with BigNumbers and promises
 const should = require("chai")
     .use(require("chai-as-promised"))
     .use(require("chai-bignumber")(BigNumber))
     .should();
 
 /**
- * Expect exception throw above call of assertJump()
+ * This function checks if the error message has "invalid opcode", which is a common error in Ethereum smart contracts
  *
+ * If the message does not contain "invalid opcode", the test will fail.
  * @param {string} error
  */
 function assertJump(error) {
@@ -24,6 +35,8 @@ function assertJump(error) {
 }
 
 // Increases testrpc time by the passed duration in seconds
+// Useful for testing time dependent tests
+// Returns a promise that resolves when the time has successfully increased.
 function increaseTime(duration) {
     const id = Date.now();
 
@@ -64,7 +77,7 @@ contract("HealthInsurance", function (accounts) {
         let insured = await insuranceInstance.isInsured(accounts[0]);
         assert.isFalse(insured, "User should not be insured");
 
-        let tx = await insuranceInstance.underwrite({ value: 1e17 });
+        await insuranceInstance.underwrite({ value: 1e17 }); // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
         insured = await insuranceInstance.isInsured(accounts[0]);
         assert.isTrue(insured, "User should now be insured");
     });
@@ -77,24 +90,22 @@ contract("HealthInsurance", function (accounts) {
         await web3.eth.sendTransaction({
             from: accounts[0],
             to: insuranceInstance.address,
-            value: 1e17,
+            value: 1e17, // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
         });
 
         let contractBalanceAfter = await web3.eth.getBalance(
             insuranceInstance.address
         );
 
-        let b = contractBalanceBefore.toNumber();
-        let a = contractBalanceAfter.toNumber();
-
         contractBalanceBefore
-            .plus(1e17)
+            .plus(1e17) // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
             .should.be.bignumber.equal(contractBalanceAfter);
     });
 
-    it("pays premium for health insurance for multiple months", async () => {
-        for (var payments = 0; payments < 10; payments++) {
-            await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 });
+    it("pays premium for health insurance for 24 months", async () => {
+        for (var payments = 0; payments < 24; payments++) {
+            // We will do 24 months to fund the smart contract in the meantime so further tests will work.
+            await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 }); // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
         }
 
         let insured = await insuranceInstance.isInsured(accounts[0]);
@@ -111,7 +122,7 @@ contract("HealthInsurance", function (accounts) {
             "User should have 0 claims before first claim"
         );
 
-        await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
+        await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether (1e18 wei)
 
         customer = await insuranceInstance.insuranceTakers(accounts[0]);
         numClaims = customer[3].toNumber();
@@ -135,7 +146,7 @@ contract("HealthInsurance", function (accounts) {
 
     it("throws error if premium is paid too late for health insurance", async () => {
         try {
-            await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 });
+            await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 }); // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
             assert.fail("should have thrown before");
         } catch (error) {
             assertJump(error);
@@ -153,7 +164,7 @@ contract("HealthInsurance", function (accounts) {
 
     it("fails to pay premium for another account without authorization", async () => {
         try {
-            await insuranceInstance.payPremiumFor(accounts[1], { value: 1e17 });
+            await insuranceInstance.payPremiumFor(accounts[1], { value: 1e17 }); // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
             assert.fail("should have thrown before");
         } catch (error) {
             assertJump(error);
@@ -162,7 +173,7 @@ contract("HealthInsurance", function (accounts) {
 
     it("fails to claim more than maximum coverage", async () => {
         try {
-            await insuranceInstance.claim(6e18); // Assuming maximum coverage is 5 ether
+            await insuranceInstance.claim(6e18); // Assuming maximum coverage is 5 ether (5e18 wei)
             assert.fail("should have thrown before");
         } catch (error) {
             assertJump(error);
@@ -171,7 +182,7 @@ contract("HealthInsurance", function (accounts) {
 
     it("fails for insured user to claim without coverage", async () => {
         try {
-            await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
+            await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether (1e18 wei)
             assert.fail("should have thrown before");
         } catch (error) {
             assertJump(error);
@@ -179,9 +190,12 @@ contract("HealthInsurance", function (accounts) {
     });
 
     it("fails for insured user to make multiple claims in short timeframe", async () => {
-        await insuranceInstance.underwrite({ value: 1e18 });
+        let insured = await insuranceInstance.isInsured(accounts[0]);
+        let premiumAmount = await insuranceInstance.getPremium(accounts[0]);
+        await insuranceInstance.underwrite({ value: 1e17 });
+        insured = await insuranceInstance.isInsured(accounts[0]);
 
-        await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
+        await insuranceInstance.claim(1e18); // Assuming the claim amount is 0.1 ether (1e17 wei)
 
         await increaseTime(60 * 60); // Move time forward by 1 hour
 
@@ -194,11 +208,13 @@ contract("HealthInsurance", function (accounts) {
     });
 
     it("policy expires after multiple missed premium payments", async () => {
-        await insuranceInstance.underwrite({ value: 1e18 });
-
-        await increaseTime(31 * 24 * 60 * 60); // Move time forward to expire policy
-
+        let premiumAmount = await insuranceInstance.getPremium(accounts[0]); // As we have made claims the premium has increased
+        await insuranceInstance.underwrite({ value: premiumAmount.toNumber() });
         let insured = await insuranceInstance.isInsured(accounts[0]);
+        assert.isTrue(insured, "User should be insured");
+        await increaseTime(2 * 30 * 24 * 60 * 60); // Move time forward to expire policy (60 days, 2 months)
+
+        insured = await insuranceInstance.isInsured(accounts[0]);
         assert.isFalse(
             insured,
             "User should not be insured anymore after policy expiry"
@@ -209,7 +225,7 @@ contract("HealthInsurance", function (accounts) {
         await increaseTime(31 * 24 * 60 * 60); // Move time forward to expire policy
 
         try {
-            await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 });
+            await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 }); // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
             assert.fail("should have thrown before");
         } catch (error) {
             assertJump(error);
@@ -220,7 +236,7 @@ contract("HealthInsurance", function (accounts) {
         await increaseTime(31 * 24 * 60 * 60); // Move time forward to expire policy
 
         try {
-            await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
+            await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether (1e18 wei)
             assert.fail("should have thrown before");
         } catch (error) {
             assertJump(error);
@@ -228,7 +244,9 @@ contract("HealthInsurance", function (accounts) {
     });
 
     it("fails to underwrite a banned user", async () => {
-        await insuranceInstance.underwrite({ value: 1e18 }); // Underwrite normally
+        let premiumAmount = await insuranceInstance.getPremium(accounts[0]);
+
+        await insuranceInstance.underwrite({ value: premiumAmount.toNumber() });
 
         // Expire user's policy
         await increaseTime(31 * 24 * 60 * 60);
@@ -236,7 +254,7 @@ contract("HealthInsurance", function (accounts) {
 
         // Attempt to underwrite the banned user again
         try {
-            await insuranceInstance.underwrite({ value: 1e17 });
+            await insuranceInstance.underwrite({ value: 1e17 }); // This is assuming that the monthly premium is 0.1 eth (1e17 wei)
             assert.fail("should have thrown before");
         } catch (error) {
             assertJump(error);
