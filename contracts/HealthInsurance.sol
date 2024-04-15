@@ -4,21 +4,20 @@ import "./Insurance.sol";
 
 contract HealthInsurance is Insurance {
     struct InsuranceTaker {
-        bool banned;
-        bool policyValid;
-        uint256 lastPayment;
-        uint256 numClaims;
-        uint256 lastClaimTime; // Add last claim time field
+        bool banned; // If the user is banned (they missed a payment)
+        bool policyValid; // If the policy is valid for the user
+        uint256 lastPayment; // The amount the last claim was
+        uint256 numClaims; // Number of claims a user has made
+        uint256 lastClaimTime; // Last time user has claimed health insurance
     }
 
     mapping(address => InsuranceTaker) public insuranceTakers;
 
-    uint256 public paymentPeriod = 30 days;
+    uint256 public paymentPeriod = 30 days; // How long a month lasts
 
-    uint256 public premiumPerMonth = 0.1 ether;
+    uint256 public premiumPerMonth = 0.1 ether; // The amount a user has to pay per month
 
-    uint256 public maxCoverage = 5 ether;
-
+    uint256 public maxCoverage = 10 ether; // The maximum a user can claim on health insurance
 
     function underwrite() public payable {
         InsuranceTaker storage customer = insuranceTakers[msg.sender];
@@ -67,7 +66,11 @@ contract HealthInsurance is Insurance {
         address insuranceTaker
     ) public constant returns (uint256 premium) {
         InsuranceTaker storage customer = insuranceTakers[insuranceTaker];
-        return (customer.numClaims + 1) * premiumPerMonth; // Monthly premium increases every claim
+        if (customer.numClaims == 0) {
+            return premiumPerMonth;
+        } else {
+            return customer.numClaims * premiumPerMonth;
+        }
     }
 
     // allows premium to be paid by separate account
