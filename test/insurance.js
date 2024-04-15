@@ -168,7 +168,7 @@ contract("HealthInsurance", function (accounts) {
             assertJump(error);
         }
     });
-    
+
     it("fails for insured user to claim without coverage", async () => {
         try {
             await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
@@ -177,12 +177,12 @@ contract("HealthInsurance", function (accounts) {
             assertJump(error);
         }
     });
-    
+
     it("fails for insured user to make multiple claims in short timeframe", async () => {
-        await insuranceInstance.underwrite({ value: 1e17 });
-    
+        await insuranceInstance.underwrite({ value: 1e18 });
+
         await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
-        
+
         await increaseTime(60 * 60); // Move time forward by 1 hour
 
         try {
@@ -192,19 +192,22 @@ contract("HealthInsurance", function (accounts) {
             assertJump(error);
         }
     });
-    
+
     it("policy expires after multiple missed premium payments", async () => {
-        await insuranceInstance.underwrite({ value: 1e17 });
-    
+        await insuranceInstance.underwrite({ value: 1e18 });
+
         await increaseTime(31 * 24 * 60 * 60); // Move time forward to expire policy
-    
+
         let insured = await insuranceInstance.isInsured(accounts[0]);
-        assert.isFalse(insured, "User should not be insured anymore after policy expiry");
+        assert.isFalse(
+            insured,
+            "User should not be insured anymore after policy expiry"
+        );
     });
-    
+
     it("fails to pay premium after policy expiry", async () => {
         await increaseTime(31 * 24 * 60 * 60); // Move time forward to expire policy
-    
+
         try {
             await insuranceInstance.payPremiumFor(accounts[0], { value: 1e17 });
             assert.fail("should have thrown before");
@@ -212,10 +215,10 @@ contract("HealthInsurance", function (accounts) {
             assertJump(error);
         }
     });
-    
+
     it("fails to make a claim after policy expiry", async () => {
         await increaseTime(31 * 24 * 60 * 60); // Move time forward to expire policy
-    
+
         try {
             await insuranceInstance.claim(1e18); // Assuming the claim amount is 1 ether
             assert.fail("should have thrown before");
@@ -223,14 +226,14 @@ contract("HealthInsurance", function (accounts) {
             assertJump(error);
         }
     });
-    
+
     it("fails to underwrite a banned user", async () => {
-        await insuranceInstance.underwrite({ value: 1e17 }); // Underwrite normally
-    
+        await insuranceInstance.underwrite({ value: 1e18 }); // Underwrite normally
+
         // Expire user's policy
         await increaseTime(31 * 24 * 60 * 60);
         await insuranceInstance.update(accounts[0]);
-    
+
         // Attempt to underwrite the banned user again
         try {
             await insuranceInstance.underwrite({ value: 1e17 });
@@ -239,5 +242,4 @@ contract("HealthInsurance", function (accounts) {
             assertJump(error);
         }
     });
-    
 });
