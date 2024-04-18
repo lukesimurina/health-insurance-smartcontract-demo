@@ -1,7 +1,5 @@
 # health-insurance-smartcontract-demo
 
-EDIT THIS!!!
-
 Demo of a minimal health insurance policy as a Smart Contract on the Ethereum Blockchain. This project serves as a sample for the toolchain involving
 
 -   yarn as package manager
@@ -9,6 +7,8 @@ Demo of a minimal health insurance policy as a Smart Contract on the Ethereum Bl
 -   solidity coverage for test coverage
 
 ## Running tests
+
+-   Requires node js 8.17.0
 
 -   `yarn` to install all packages
 -   `npm start` to start testrpc
