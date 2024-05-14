@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Insurance Demo</title>
+    <!-- Include Bootstrap CSS for styling -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+        }
+        .container {
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert-success, .alert-danger {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4 text-center">Health Insurance System Dashboard</h1>
+        
+        <!-- Account Selection -->
+        <div class="mb-3">
+            <label for="accountSelect" class="form-label"><strong>Select Your Account:</strong></label>
+            <select class="form-control" id="accountSelect" name="selectedAccount" onchange="setAccount(this.value)">
+                {% for account in accounts %}
+                    <option value="{{ account }}" {% if account == selected_account %}selected{% endif %}>
+                        {{ loop.index }} - {{ account }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- User Information -->
+        <div class="alert alert-info">Insured Status: <strong>{{ insured }}</strong></div>
+        <div class="alert alert-warning">User Ban Status: <strong>{{ banned }}</strong></div>
+        <div class="alert alert-success">Time until next premium due: <span id="premiumTimer"></span></div>
+        <div class="alert alert-success">Time until next claim possible: <span id="claimTimer"></span></div>
+        <div class="alert alert-secondary">User Balance: <strong>{{ user_balance }}</strong> ETH</div>
+        <div class="alert alert-secondary">Contract Balance: <strong>{{ contract_balance }}</strong> ETH</div>
+
+        <!-- Action Buttons and Flash Messages -->
+        {% for message, category in get_flashed_messages(with_categories=true) %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        
+        <form action="/underwrite" method="post" class="mb-3">
+            <button type="submit" class="btn btn-primary btn-block">Underwrite Policy</button>
+        </form>
+        
+        <form action="/pay_premium" method="post" class="mb-3">
+            <input type="text" name="other_account" placeholder="Pay for another user (Optional)" class="form-control mb-2">
+            <button type="submit" class="btn btn-warning btn-block">Pay Premium</button>
+        </form>
+        
+        <form action="/claim" method="post">
+            <input type="number" name="claim_amount" placeholder="Claim Amount in ETH" step="0.01" min="0.01" class="form-control mb-2" required>
+            <button type="submit" class="btn btn-success btn-block">Make a Claim</button>
+        </form>
+        <!-- Transaction Table for Selected Account -->
+<h2 class="mt-4">Transactions for Selected Account</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th>Cost</th>
+            <th>Status</th>
+            <th>Gas Used</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.description }}</td>
+            <td>{{ transaction.cost }} ETH</td>
+            <td>{{ transaction.status }}</td>
+            <td>{{ transaction.gas_used }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">No transactions found for this account.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Navigation Buttons -->
+<div class="mt-4">
+    <a href="/all_transactions" class="btn btn-secondary">View All Transactions</a>
+</div>
+
+    </div>
+
+    <!-- Bootstrap JS and its dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function setAccount(account) {
+            document.cookie = "selectedAccount=" + account;
+            window.location.reload();
+        }
+    </script>
+    <script>
+        function startTimer(duration, premiumDisplay, claimDisplay, claimCooldown) {
+            var timer = duration, claimTimer = claimCooldown;
+            setInterval(function () {
+                // Calculate days, hours, minutes and seconds for premium timer
+                var days = parseInt(timer / 86400, 10);
+                var hours = parseInt((timer % 86400) / 3600, 10);
+                var minutes = parseInt((timer % 3600) / 60, 10);
+                var seconds = parseInt(timer % 60, 10);
+
+                // Update the premium timer display
+                premiumDisplay.textContent = days + "d " + hours + "h " + minutes + "m " + seconds + "s";
+
+                // Calculate days, hours, minutes and seconds for claim timer
+                var claimDays = parseInt(claimTimer / 86400, 10);
+                var claimHours = parseInt((claimTimer % 86400) / 3600, 10);
+                var claimMinutes = parseInt((claimTimer % 3600) / 60, 10);
+                var claimSeconds = parseInt(claimTimer % 60, 10);
+
+                // Update the claim timer display
+                claimDisplay.textContent = claimDays + "d " + claimHours + "h " + claimMinutes + "m " + claimSeconds + "s";
+
+                // Decrement the timer
+                if (timer > 0) --timer;
+                if (claimTimer > 0) --claimTimer;
+            }, 1000);
+        }
+
+        window.onload = function () {
+            var remainingPaymentSeconds = {{ remaining_payment_seconds }};
+            var remainingClaimSeconds = {{ remaining_claim_seconds }};
+            var premiumDisplay = document.querySelector('#premiumTimer');
+            var claimDisplay = document.querySelector('#claimTimer');
+            startTimer(remainingPaymentSeconds, premiumDisplay, claimDisplay, remainingClaimSeconds);
+        };
+    </script>
+</body>
+</html>

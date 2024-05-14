@@ -1,0 +1,20 @@
+{
+  "name": "HealthInsuranceBlockChain",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "ganache-cli": "^6.12.2",
+    "truffle": "^5.11.5"
+  },
+  "scripts": {
+    "start": "ganache",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
+    "test": "truffle test",
+    "deploy": "truffle migrate --reset"
+  },
+  "devDependencies": {
+    "mocha": "^10.4.0"
+  }
+}
