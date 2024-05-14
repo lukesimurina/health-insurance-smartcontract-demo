@@ -13,8 +13,7 @@ Dependencies:
 
 Setup:
 
-1. Clone the Repository:
-   Use the command git clone https://yourrepositoryurl.git followed by cd HealthInsuranceBlockChain
+1. Clone the Repository.
 
 2. Install Node.js Dependencies:
    Use the command npm install
