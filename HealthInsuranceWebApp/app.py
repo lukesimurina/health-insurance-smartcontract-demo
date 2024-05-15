@@ -51,9 +51,8 @@ def log_transaction(description, cost, status, account, gas_used):
         print(f"Failed to log transaction: {e}")
 
 def initialize_transactions_log():
-    if not os.path.exists('transactions.json'):
-        with open('transactions.json', 'w') as file:
-            json.dump([], file)
+    with open('transactions.json', 'w') as file:
+        json.dump([], file)
 
 
 
