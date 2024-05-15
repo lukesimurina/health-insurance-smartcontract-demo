@@ -7,3 +7,4 @@ coverage
 coverage.json
 build
 .vscode/settings.json
+yarn.lock
