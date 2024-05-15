@@ -4,8 +4,8 @@ This project demonstrates a blockchain-based health insurance system using Ether
 
 Dependencies:
 
--   Python 3: The programming language used for the Flask web server. Download from https://www.python.org/downloads/
--   Node.js and npm: Needed for running Ganache CLI and Truffle Suite. Download from https://nodejs.org/en/download/
+-   Python 3: The programming language used for the Flask web server. Download from https://www.python.org/downloads/ (Works with 3.9.5)
+-   Node.js and npm: Needed for running Ganache CLI and Truffle Suite. Download from https://nodejs.org/en/download/ (16.20.2)
 -   Flask: Python web framework. Documentation at http://flask.palletsprojects.com/en/1.1.x/installation/
 -   Web3.py: A Python library for interacting with Ethereum. Documentation at https://web3py.readthedocs.io/en/stable/
 -   Ganache CLI: Personal blockchain for Ethereum development. Install via npm with npm install -g ganache-cli
